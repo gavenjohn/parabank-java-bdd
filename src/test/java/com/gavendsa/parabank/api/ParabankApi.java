@@ -6,19 +6,22 @@ import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
 
-public final class ParabankRegistrationClient {
+public final class ParabankApi {
 
-    private ParabankRegistrationClient() {
+    private ParabankApi() {
+    }
+
+    private static String baseUrl() {
+        return System.getProperty("baseUrl", "http://localhost:8080");
     }
 
     public static Customer registerNewCustomer() {
-        RestAssured.baseURI = System.getProperty("baseUrl", "http://localhost:8080");
+        RestAssured.baseURI = baseUrl();
         Customer customer = Customer.generate();
 
         // Unlike Playwright's request context, RestAssured's given() does not
         // share cookies between calls automatically - the session established by
-        // this GET has to be carried into the POST explicitly, or the POST is
-        // effectively cold and returns 500.
+        // this GET has to be carried into the POST explicitly.
         Response getResponse = given().get("/parabank/register.htm");
         String sessionId = getResponse.getCookie("JSESSIONID");
 
@@ -43,5 +46,12 @@ public final class ParabankRegistrationClient {
         }
 
         return customer;
+    }
+
+    public static Response getAccount(int accountId) {
+        RestAssured.baseURI = baseUrl();
+        return given()
+                .header("Accept", "application/json")
+                .get("/parabank/services/bank/accounts/" + accountId);
     }
 }
